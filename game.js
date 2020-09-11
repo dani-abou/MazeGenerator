@@ -1,5 +1,3 @@
-//TEST
-
 //Instantiates the canvas as well as the drawing context
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
@@ -29,6 +27,9 @@ var rightPressed = false;
 var leftPressed = false;
 var upPressed = false;
 var downPressed = false;
+
+//Used in Breadth First solver to erase extra branches
+var visits = []
 
 //CLass representing each individual spot on the board's grid
 class Tile {
@@ -315,23 +316,47 @@ function keyDownHandler(e) {
 
 //Sets up the board for the solverController
 //Connects the button into a solver call
-function controller(func) {
+function controller(func, type) {
   current = board[0][0];
   resetTiles(false);
-  return func([current]);
+  return recursionController([current], type, func);
 }
 
-//Recursively finds a solution using depth first search, and animaets as it goes
-function depthSolver(stack) {
+//Type represents if it is a fill (false) or a solve(true)
+//Instantiates either depth first or breadth recursion
+//Determines if we have finished yet, if not returns into recursion
+function recursionController(list, type, func) {
+  var condition = false
+  if (type) {
+    condition = (current == board[columnCount - 1][rowCount - 1]);
+  } else {
+    //condition = (list.length == 0);
+    condition = isFull();
+  }
+  func(list, type, condition);
+}
+
+function isFull() {
+  var anyfalse = board.some((row) => row.some(
+    (element) => !element.userVisited))
+  return !anyfalse;
+}
+
+//Runs either the depth first solver or filler based off the give Type
+//Condition represents if we have reached the end
+
+function depthFirst(stack, type, condition) {
   current.userVisited = true;
   current.visited = true;
   draw();
-  if (current == board[columnCount - 1][rowCount - 1]) {
+  if (condition) {
     return;
   }
   var temp = current.connections.find(element => !element.visited);
   if (temp === undefined) {
-    current.userVisited = false;
+    if (type) {
+      current.userVisited = false;
+    }
     stack.pop();
     current = stack[stack.length - 1];
   } else {
@@ -339,47 +364,28 @@ function depthSolver(stack) {
     stack.push(temp);
   }
   requestAnimationFrame(() => {
-    depthSolver(stack);
+    recursionController(stack, type, depthFirst);
   });
 }
 
-//Fills the board using a depth first algorithm
-function depthFiller(stack) {
-  if (stack.length == 0) {
+//Runs either the breadth first solver or filler based off Type
+//Condition represents if we have reached the end
+function breadthFirst(queue, type, condition) {
+  if (condition) {
+    if (type) {
+      var facePos = current;
+      simplifyBoard([current]);
+      current = facePos;
+      draw();
+    }
     return;
   }
-  current.userVisited = true;
-  current.visited = true;
-  draw();
-  var temp = current.connections.find(element => !element.visited);
-  if (temp === undefined) {
-    stack.pop();
-    current = stack[stack.length - 1];
-  } else {
-    current = temp;
-    stack.push(temp);
-  }
-  requestAnimationFrame(() => {
-    depthFiller(stack);
-  });
-}
-
-//Solves the maze using a breadth first algorithm
-//Erases all the excess branches
-var visits = []
-
-function breadthSolver(queue) {
   current = queue[0];
   current.userVisited = true;
-  visits.push(current);
-  draw();
-  if (current == board[columnCount - 1][rowCount - 1]) {
-    var facePos = current;
-    simplifyBoard([current]);
-    current = facePos;
-    draw();
-    return;
+  if (type) {
+    visits.push(current);
   }
+  draw();
   current.connections.forEach((connection) => {
     if (connection.userVisited == false) {
       queue.push(connection);
@@ -387,7 +393,7 @@ function breadthSolver(queue) {
   });
   queue.shift();
   requestAnimationFrame(() => {
-    breadthSolver(queue);
+    recursionController(queue, type, breadthFirst);
   })
 }
 
@@ -410,24 +416,6 @@ function simplifyBoard(solution) {
 
 }
 
-//Fills the board using a breadth irst algorithm
-function breadthFiller(queue) {
-  if (queue.length == 0) {
-    return;
-  }
-  current = queue[0];
-  current.userVisited = true;
-  draw();
-  current.connections.forEach((connection) => {
-    if (connection.userVisited == false) {
-      queue.push(connection);
-    }
-  });
-  queue.shift();
-  requestAnimationFrame(() => {
-    breadthFiller(queue);
-  })
-}
 
 //Resets all of the visited properties of all the tiles to false,
 //If resetConnects is true. we also reset all the connections

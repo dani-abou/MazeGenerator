@@ -12,15 +12,15 @@
   <canvas id="myCanvas" width="700" height="500"></canvas>
   <button class="btn3" onclick="reset()">Reset progress</button>
   <div class="solvers">
-    <button onclick="controller(depthSolver)">
+    <button onclick="controller(depthFirst, true)">
       Show Solution Animation(Depth)</button>
-    <button onclick="controller(breadthSolver)">
+    <button onclick="controller(breadthFirst, true)">
       Show Solution Animation(Breadth)</button>
     </div>
     <div class= "fillers">
-    <button onclick="controller(depthFiller)">
+    <button onclick="controller(depthFirst, false)">
       Fill whole maze (Depth)</button>
-    <button onclick="controller(breadthFiller)">
+    <button onclick="controller(breadthFirst, false)">
       Fill whole maze (Breadth)</button>
   </div>
   <div class="form1">
