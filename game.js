@@ -1,4 +1,6 @@
-//INstantiates the canvas as well as the drawing context
+//TEST
+
+//Instantiates the canvas as well as the drawing context
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 
